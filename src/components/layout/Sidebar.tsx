@@ -25,7 +25,6 @@ const navigation = [
   { name: "CRM", href: "/customers", icon: Building2 },
   { name: "Inventory", href: "/inventory", icon: Package },
   { name: "Invoices", href: "/invoices", icon: Receipt },
-  { name: "Settings", href: "/settings", icon: Settings },
 ];
 
 export function Sidebar() {
@@ -91,8 +90,25 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Collapse Toggle */}
-      <div className="absolute bottom-4 left-0 right-0 px-3">
+      {/* Bottom Section: Settings + Collapse */}
+      <div className={cn("absolute bottom-4 left-0 right-0", sidebarOpen ? "px-3" : "px-2")}>
+        {/* Settings Link */}
+        <Link
+          href="/settings"
+          className={cn(
+            "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 mb-2",
+            pathname.startsWith("/settings")
+              ? "bg-white/10 text-white"
+              : "text-white/60 hover:bg-white/5 hover:text-white",
+            !sidebarOpen && "justify-center px-0"
+          )}
+          title={!sidebarOpen ? "Settings" : undefined}
+        >
+          <Settings className={cn("h-5 w-5 shrink-0", pathname.startsWith("/settings") && "text-brand-green")} />
+          {sidebarOpen && <span>Settings</span>}
+        </Link>
+
+        {/* Collapse Toggle */}
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className={cn(
