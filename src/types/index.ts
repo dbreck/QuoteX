@@ -131,9 +131,45 @@ export interface Contact {
   isPrimary: boolean;
 }
 
+// Pricing Tiers - 50/20/10 Trade Discount Scheme
+// These represent discounts OFF LIST PRICE (not cumulative)
+// Premier: 50% off list = pays 50% of list price
+// Preferred: 20% off list = pays 80% of list price
+// Standard: 10% off list = pays 90% of list price
+export type PricingTier = 'premier' | 'preferred' | 'standard';
+
+export interface PricingTierConfig {
+  id: PricingTier;
+  name: string;
+  discountPercent: number; // 50, 20, or 10
+  description: string;
+  minAnnualVolume?: number; // Minimum annual purchase to qualify
+}
+
+// Organization represents the parent company/institution
+export interface Organization {
+  id: string;
+  name: string;
+  type: 'university' | 'government' | 'corporate' | 'healthcare' | 'k12' | 'dealer' | 'other';
+  pricingTier: PricingTier;
+  accountNumber?: string;
+  website?: string;
+  address?: {
+    street: string;
+    city: string;
+    state: string;
+    zip: string;
+    country: string;
+  };
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Customer {
   id: string;
-  companyName: string;
+  organizationId?: string; // Links to parent Organization
+  companyName: string; // Department or division name
   contacts: Contact[];
   address?: {
     street: string;
@@ -210,16 +246,28 @@ export interface DashboardMetrics {
 export interface Settings {
   company: {
     name: string;
+    tagline?: string;
     address: string;
+    city?: string;
+    state?: string;
+    zip?: string;
     phone: string;
     email: string;
     website: string;
     logo?: string;
+    warranty?: string;
+    certifications?: string[];
   };
   pricing: {
     defaultMargin: number;
     taxRate: number;
     quoteValidityDays: number;
+    pricingTiers: PricingTierConfig[];
+  };
+  shipping: {
+    freeShippingThreshold: number; // Orders above this get free shipping
+    baseShippingRate: number;
+    expeditedMultiplier: number;
   };
   preferences: {
     theme: 'light' | 'dark' | 'system';

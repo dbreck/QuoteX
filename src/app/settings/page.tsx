@@ -20,6 +20,11 @@ import {
   Phone,
   Globe,
   MapPin,
+  Truck,
+  Crown,
+  Star,
+  Award,
+  Shield,
 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -54,6 +59,7 @@ export default function SettingsPage() {
   const handleSave = () => {
     updateSettings({
       company: {
+        ...settings.company,
         name: companyInfo.name,
         email: companyInfo.email,
         phone: companyInfo.phone,
@@ -62,10 +68,12 @@ export default function SettingsPage() {
         logo: companyInfo.logo || undefined,
       },
       pricing: {
+        ...settings.pricing,
         defaultMargin: pricingSettings.defaultMargin,
         taxRate: pricingSettings.taxRate,
         quoteValidityDays: pricingSettings.quoteValidityDays,
       },
+      shipping: settings.shipping,
     });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
@@ -255,6 +263,100 @@ export default function SettingsPage() {
                       }
                     />
                     <p className="text-xs text-slate-500">Default payment terms for invoices (Net X days)</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Pricing Tiers Card */}
+            <Card className="mt-6">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100">
+                    <Crown className="h-5 w-5 text-amber-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-900">Trade Discount Tiers (50/20/10)</h3>
+                    <p className="text-sm text-slate-500">Volume-based discounts off list price for qualified accounts</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  {settings.pricing.pricingTiers.map((tier) => {
+                    const icons = {
+                      premier: Crown,
+                      preferred: Star,
+                      standard: Award,
+                    };
+                    const colors = {
+                      premier: "bg-amber-100 text-amber-600 border-amber-200",
+                      preferred: "bg-blue-100 text-blue-600 border-blue-200",
+                      standard: "bg-slate-100 text-slate-600 border-slate-200",
+                    };
+                    const Icon = icons[tier.id];
+                    return (
+                      <div
+                        key={tier.id}
+                        className={`relative overflow-hidden rounded-xl border-2 p-4 ${colors[tier.id]}`}
+                      >
+                        <div className="flex items-center gap-2 mb-3">
+                          <Icon className="h-5 w-5" />
+                          <span className="font-semibold">{tier.name}</span>
+                        </div>
+                        <div className="text-3xl font-bold mb-1">{tier.discountPercent}%</div>
+                        <div className="text-sm opacity-75">off list price</div>
+                        <div className="text-xs mt-3 opacity-60">{tier.description}</div>
+                        {tier.minAnnualVolume && (
+                          <div className="text-xs mt-2 font-medium">
+                            Min: ${tier.minAnnualVolume.toLocaleString()}/yr
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-slate-500 mt-4 p-3 bg-slate-50 rounded-lg">
+                  <strong>How it works:</strong> Trade discounts are applied OFF list price (not cumulative).
+                  A Premier account paying 50% off list pays 50% of the list price.
+                  Assign tiers to Organizations, which flow down to their Customers.
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Shipping Card */}
+            <Card className="mt-6">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
+                    <Truck className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-900">Shipping Settings</h3>
+                    <p className="text-sm text-slate-500">Configure shipping rates and thresholds</p>
+                  </div>
+                </div>
+                <div className="grid gap-4 max-w-xl">
+                  <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+                    <div>
+                      <p className="font-medium text-green-800">Free Shipping Threshold</p>
+                      <p className="text-sm text-green-600">Orders above this amount ship free</p>
+                    </div>
+                    <div className="text-2xl font-bold text-green-700">
+                      ${settings.shipping.freeShippingThreshold.toLocaleString()}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-slate-50 rounded-lg">
+                      <p className="text-sm text-slate-500">Base Shipping Rate</p>
+                      <p className="text-xl font-semibold text-slate-900">
+                        ${settings.shipping.baseShippingRate}
+                      </p>
+                    </div>
+                    <div className="p-4 bg-slate-50 rounded-lg">
+                      <p className="text-sm text-slate-500">Expedited Multiplier</p>
+                      <p className="text-xl font-semibold text-slate-900">
+                        {settings.shipping.expeditedMultiplier}x
+                      </p>
+                    </div>
                   </div>
                 </div>
               </CardContent>

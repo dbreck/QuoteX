@@ -15,13 +15,14 @@ import {
   ChevronLeft,
   ChevronRight,
   PlusCircle,
+  Building2,
 } from "lucide-react";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Configurator", href: "/configurator", icon: Layers },
   { name: "Quotes", href: "/quotes", icon: FileText },
-  { name: "Customers", href: "/customers", icon: Users },
+  { name: "CRM", href: "/customers", icon: Building2 },
   { name: "Inventory", href: "/inventory", icon: Package },
   { name: "Invoices", href: "/invoices", icon: Receipt },
   { name: "Settings", href: "/settings", icon: Settings },
