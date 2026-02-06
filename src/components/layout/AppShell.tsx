@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useStore } from "@/store";
 import { Sidebar } from "./Sidebar";
 import { cn } from "@/lib/utils";
@@ -9,7 +10,11 @@ interface AppShellProps {
 }
 
 export function AppShell({ children }: AppShellProps) {
-  const { sidebarOpen } = useStore();
+  const { sidebarOpen, seedDealers } = useStore();
+
+  useEffect(() => {
+    seedDealers();
+  }, [seedDealers]);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">

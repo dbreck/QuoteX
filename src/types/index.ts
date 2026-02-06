@@ -232,6 +232,20 @@ export interface InventoryItem {
   notes?: string;
 }
 
+// CRM Activity Tracking
+export type ActivityType = 'note' | 'quote_created' | 'quote_sent' | 'call' | 'email' | 'meeting';
+
+export interface Activity {
+  id: string;
+  organizationId?: string;
+  customerId?: string;
+  quoteId?: string;
+  type: ActivityType;
+  content: string;
+  createdAt: string;
+  createdBy?: string;
+}
+
 export interface DashboardMetrics {
   quotesThisMonth: number;
   quotesLastMonth: number;
