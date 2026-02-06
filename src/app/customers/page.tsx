@@ -15,7 +15,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useStore } from "@/store";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import {
   Plus,
   Search,
@@ -40,15 +40,9 @@ import {
   Briefcase,
   School,
   Store,
-  MessageSquare,
-  PhoneCall,
-  Send,
-  Calendar,
-  StickyNote,
-  Activity as ActivityIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { Customer, Contact, Organization, PricingTier, ActivityType } from "@/types";
+import { Customer, Contact, Organization, PricingTier } from "@/types";
 
 const tierIcons = {
   premier: Crown,
@@ -77,7 +71,6 @@ export default function CustomersPage() {
     customers,
     organizations,
     quotes,
-    activities,
     settings,
     addCustomer,
     updateCustomer,
@@ -86,8 +79,6 @@ export default function CustomersPage() {
     updateOrganization,
     deleteOrganization,
     getOrganization,
-    getCustomer,
-    addActivity,
   } = useStore();
 
   const [activeTab, setActiveTab] = useState("organizations");
@@ -125,9 +116,6 @@ export default function CustomersPage() {
   });
 
   const [newTag, setNewTag] = useState("");
-  const [activityNote, setActivityNote] = useState("");
-  const [activityOrgId, setActivityOrgId] = useState("");
-  const [activityFilter, setActivityFilter] = useState<ActivityType | "all">("all");
 
   const filteredOrganizations = useMemo(() => {
     if (!search) return organizations;
@@ -153,38 +141,6 @@ export default function CustomersPage() {
       );
     });
   }, [customers, search, getOrganization]);
-
-  const filteredActivities = useMemo(() => {
-    let items = activities;
-    if (activityFilter !== "all") {
-      items = items.filter((a) => a.type === activityFilter);
-    }
-    if (search) {
-      const searchLower = search.toLowerCase();
-      items = items.filter((a) => a.content.toLowerCase().includes(searchLower));
-    }
-    return items.slice(0, 50);
-  }, [activities, activityFilter, search]);
-
-  const activityTypeConfig: Record<ActivityType, { icon: typeof FileText; color: string; label: string }> = {
-    note: { icon: StickyNote, color: "bg-slate-100 text-slate-600", label: "Note" },
-    quote_created: { icon: FileText, color: "bg-blue-100 text-blue-600", label: "Quote Created" },
-    quote_sent: { icon: Send, color: "bg-green-100 text-green-600", label: "Quote Sent" },
-    call: { icon: PhoneCall, color: "bg-amber-100 text-amber-600", label: "Call" },
-    email: { icon: MessageSquare, color: "bg-purple-100 text-purple-600", label: "Email" },
-    meeting: { icon: Calendar, color: "bg-pink-100 text-pink-600", label: "Meeting" },
-  };
-
-  const handleAddNote = () => {
-    if (!activityNote.trim()) return;
-    addActivity({
-      type: "note",
-      content: activityNote.trim(),
-      organizationId: activityOrgId || undefined,
-    });
-    setActivityNote("");
-    setActivityOrgId("");
-  };
 
   const getOrgStats = (orgId: string) => {
     const orgCustomers = customers.filter((c) => c.organizationId === orgId);
@@ -383,13 +339,9 @@ export default function CustomersPage() {
                 <Users className="h-4 w-4" />
                 Customers
               </TabsTrigger>
-              <TabsTrigger value="activity" className="gap-2">
-                <ActivityIcon className="h-4 w-4" />
-                Activity
-              </TabsTrigger>
             </TabsList>
 
-            {activeTab === "activity" ? null : activeTab === "organizations" ? (
+            {activeTab === "organizations" ? (
               <Dialog
                 open={isAddOrgDialogOpen}
                 onOpenChange={(open) => {
@@ -809,9 +761,9 @@ export default function CustomersPage() {
                               </div>
                               <div>
                                 <div className="flex items-center gap-2">
-                                  <Link href={`/customers/org/${org.id}`} className="text-lg font-semibold text-slate-900 hover:text-brand-green transition-colors">
+                                  <h3 className="text-lg font-semibold text-slate-900">
                                     {org.name}
-                                  </Link>
+                                  </h3>
                                   <Badge className={tierColors[org.pricingTier]}>
                                     <TierIcon className="h-3 w-3 mr-1" />
                                     {tierConfig?.name} ({tierConfig?.discountPercent}% off)
@@ -950,17 +902,17 @@ export default function CustomersPage() {
                     <Card key={customer.id} className="group hover:shadow-lg transition-shadow">
                       <CardContent className="p-5">
                         <div className="flex items-start justify-between mb-3">
-                          <Link href={`/customers/${customer.id}`} className="flex items-center gap-3">
+                          <div className="flex items-center gap-3">
                             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-green/10 text-brand-green font-bold text-lg">
                               {customer.companyName.charAt(0)}
                             </div>
                             <div>
-                              <h3 className="font-semibold text-slate-900 group-hover:text-brand-green">
+                              <h3 className="font-semibold text-slate-900">
                                 {customer.companyName}
                               </h3>
                               <p className="text-sm text-slate-500">{primaryContact?.name}</p>
                             </div>
-                          </Link>
+                          </div>
                           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
                               onClick={() => handleEditCustomer(customer)}
@@ -1047,135 +999,6 @@ export default function CustomersPage() {
                     </Card>
                   );
                 })
-              )}
-            </div>
-          </TabsContent>
-
-          {/* Activity Tab */}
-          <TabsContent value="activity" className="mt-0">
-            <div className="space-y-4">
-              {/* Add Note + Filter */}
-              <Card>
-                <CardContent className="p-5">
-                  <div className="flex items-start gap-4">
-                    <div className="flex-1 space-y-3">
-                      <textarea
-                        className="w-full px-3 py-2 border rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-brand-green"
-                        rows={2}
-                        value={activityNote}
-                        onChange={(e) => setActivityNote(e.target.value)}
-                        placeholder="Add a note..."
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && e.metaKey) {
-                            e.preventDefault();
-                            handleAddNote();
-                          }
-                        }}
-                      />
-                      <div className="flex items-center gap-3">
-                        <select
-                          className="px-3 py-1.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-green"
-                          value={activityOrgId}
-                          onChange={(e) => setActivityOrgId(e.target.value)}
-                        >
-                          <option value="">No organization</option>
-                          {organizations.map((org) => (
-                            <option key={org.id} value={org.id}>
-                              {org.name}
-                            </option>
-                          ))}
-                        </select>
-                        <Button size="sm" onClick={handleAddNote} disabled={!activityNote.trim()}>
-                          Add Note
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Filter */}
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-500">Filter:</span>
-                {(["all", "note", "quote_created", "quote_sent", "call", "email", "meeting"] as const).map((type) => (
-                  <button
-                    key={type}
-                    onClick={() => setActivityFilter(type)}
-                    className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                      activityFilter === type
-                        ? "bg-brand-navy text-white"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                    }`}
-                  >
-                    {type === "all" ? "All" : activityTypeConfig[type].label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Activity Feed */}
-              {filteredActivities.length === 0 ? (
-                <Card>
-                  <CardContent className="py-12 text-center">
-                    <ActivityIcon className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-                    <p className="text-slate-500">No activity yet</p>
-                    <p className="text-sm text-slate-400 mt-1">
-                      Notes, quotes, calls, and meetings will appear here
-                    </p>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="space-y-3">
-                  {filteredActivities.map((activity) => {
-                    const config = activityTypeConfig[activity.type];
-                    const Icon = config.icon;
-                    const org = activity.organizationId
-                      ? getOrganization(activity.organizationId)
-                      : null;
-                    const customer = activity.customerId
-                      ? getCustomer(activity.customerId)
-                      : null;
-
-                    return (
-                      <Card key={activity.id}>
-                        <CardContent className="p-4">
-                          <div className="flex items-start gap-3">
-                            <div
-                              className={`flex h-9 w-9 items-center justify-center rounded-lg shrink-0 ${config.color}`}
-                            >
-                              <Icon className="h-4 w-4" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm text-slate-900">{activity.content}</p>
-                              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                                <Badge variant="secondary" className="text-xs">
-                                  {config.label}
-                                </Badge>
-                                {org && (
-                                  <Link href={`/customers/org/${org.id}`}>
-                                    <Badge variant="outline" className="text-xs cursor-pointer hover:bg-slate-100">
-                                      <Building2 className="h-3 w-3 mr-1" />
-                                      {org.name}
-                                    </Badge>
-                                  </Link>
-                                )}
-                                {customer && (
-                                  <Link href={`/customers/${customer.id}`}>
-                                    <Badge variant="outline" className="text-xs cursor-pointer hover:bg-slate-100">
-                                      {customer.companyName}
-                                    </Badge>
-                                  </Link>
-                                )}
-                                <span className="text-xs text-slate-400">
-                                  {formatDate(activity.createdAt)}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
               )}
             </div>
           </TabsContent>

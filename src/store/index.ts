@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Quote, Customer, Invoice, InventoryItem, Settings, TableConfiguration, QuoteLineItem, Organization, PricingTierConfig, Activity, ActivityType } from '@/types';
+import type { Quote, Customer, Invoice, InventoryItem, Settings, TableConfiguration, QuoteLineItem, Organization, PricingTierConfig } from '@/types';
 import { generateId, generateQuoteNumber, generateInvoiceNumber } from '@/lib/utils';
 
 interface AppState {
@@ -51,14 +51,6 @@ interface AppState {
   // Pricing Helpers
   getCustomerDiscount: (customerId: string) => number;
   applyTierPricing: (listPrice: number, customerId: string) => number;
-
-  // Activities
-  activities: Activity[];
-  addActivity: (activity: Omit<Activity, 'id' | 'createdAt'>) => Activity;
-
-  // Dealer Seeding
-  _dealersSeeded: boolean;
-  seedDealers: () => void;
 
   // UI State
   sidebarOpen: boolean;
@@ -586,23 +578,6 @@ const demoInventory: InventoryItem[] = [
   { id: 'inv-item-15', sku: 'ACC-GLI-STD', name: 'Floor Glides - Standard (set of 4)', category: 'hardware', quantity: 200, reorderPoint: 100, reorderQuantity: 200, unitCost: 8, supplier: 'Shepherd Caster' },
 ];
 
-// 13 real TableX dealers from Quote Queue data
-const seedDealerNames = [
-  'Ace Office Furniture',
-  'CFM - Contract Furniture Marketing',
-  'Commercial Interior Advisors',
-  'Cool Lines Group',
-  'CRG',
-  'House acct',
-  'IMG South',
-  'JMA',
-  'Melissa J. Meeks and Associates',
-  'Mid-States Rep',
-  'The Contract Group Inc.',
-  'Webb Contract',
-  'Western Interiors Group',
-];
-
 export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
@@ -641,18 +616,6 @@ export const useStore = create<AppState>()(
           updatedAt: new Date().toISOString(),
         };
         set((state) => ({ quotes: [...state.quotes, newQuote] }));
-
-        // Auto-log activity
-        const customer = get().getCustomer(quote.customerId);
-        const activityType: ActivityType = quote.status === 'sent' ? 'quote_sent' : 'quote_created';
-        get().addActivity({
-          type: activityType,
-          content: `${activityType === 'quote_sent' ? 'Sent' : 'Created'} quote ${newQuote.quoteNumber} for ${quote.customerName}${quote.projectName ? ` — ${quote.projectName}` : ''}`,
-          organizationId: customer?.organizationId || undefined,
-          customerId: quote.customerId,
-          quoteId: newQuote.id,
-        });
-
         return newQuote;
       },
       updateQuote: (id, updates) => {
@@ -786,40 +749,6 @@ export const useStore = create<AppState>()(
         return listPrice * (1 - discount / 100);
       },
 
-      // Activities
-      activities: [],
-      addActivity: (activity) => {
-        const newActivity: Activity = {
-          ...activity,
-          id: generateId(),
-          createdAt: new Date().toISOString(),
-        };
-        set((state) => ({ activities: [newActivity, ...state.activities] }));
-        return newActivity;
-      },
-
-      // Dealer Seeding
-      _dealersSeeded: false,
-      seedDealers: () => {
-        const state = get();
-        if (state._dealersSeeded) return;
-        const existingNames = new Set(state.organizations.map((o) => o.name.toLowerCase()));
-        const newDealers: Organization[] = seedDealerNames
-          .filter((name) => !existingNames.has(name.toLowerCase()))
-          .map((name) => ({
-            id: generateId(),
-            name,
-            type: 'dealer' as const,
-            pricingTier: 'preferred' as const,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          }));
-        set((state) => ({
-          organizations: [...state.organizations, ...newDealers],
-          _dealersSeeded: true,
-        }));
-      },
-
       // Current Configuration
       currentConfig: defaultConfig,
       updateCurrentConfig: (updates) => {
@@ -843,10 +772,8 @@ export const useStore = create<AppState>()(
         customers: state.customers,
         invoices: state.invoices,
         inventory: state.inventory,
-        activities: state.activities,
         settings: state.settings,
         theme: state.theme,
-        _dealersSeeded: state._dealersSeeded,
       }),
     }
   )
